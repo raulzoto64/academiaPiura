@@ -190,6 +190,61 @@ app.post("/make-server-c2d91f01/courses", async (c) => {
   }
 });
 
+// Simulate purchase
+app.post("/make-server-c2d91f01/courses/:id/purchase", async (c) => {
+  try {
+    const token = c.req.header('Authorization')?.split(' ')[1];
+    if (!token) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const user = await authenticateToken(token);
+    if (!user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const courseId = c.req.param('id');
+    const paymentData = await c.req.json();
+    
+    // Simulate payment processing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Check if already enrolled
+    const enrollmentId = `enrollment:${user.id}:${courseId}`;
+    const existingEnrollment = await kv.get(enrollmentId);
+    
+    if (existingEnrollment) {
+      return c.json({ error: 'Already enrolled in this course' }, 400);
+    }
+
+    // Create enrollment
+    const enrollment = {
+      id: enrollmentId,
+      userId: user.id,
+      courseId,
+      enrolledAt: new Date().toISOString(),
+      progress: 0,
+      completedLessons: []
+    };
+
+    await kv.set(enrollmentId, enrollment);
+    
+    // Add to user's enrollments
+    const userEnrollments = await kv.get(`user:${user.id}:enrollments`) || [];
+    userEnrollments.push(courseId);
+    await kv.set(`user:${user.id}:enrollments`, userEnrollments);
+
+    return c.json({ 
+      success: true, 
+      message: 'Purchase completed successfully',
+      enrollment 
+    });
+  } catch (error) {
+    console.log('Purchase error:', error);
+    return c.json({ error: 'Error processing purchase' }, 500);
+  }
+});
+
 // Get all published courses
 app.get("/make-server-c2d91f01/courses", async (c) => {
   try {

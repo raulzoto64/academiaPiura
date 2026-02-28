@@ -6,6 +6,7 @@ export interface Course {
   rating: number;
   students: number;
   image: string;
+  previewVideoUrl: string;
   category: string;
   duration: string;
   level: string;
@@ -24,6 +25,7 @@ export const courses: Course[] = [
     rating: 4.8,
     students: 45230,
     image: "https://images.unsplash.com/photo-1675495277087-10598bf7bcd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9ncmFtbWluZyUyMGxhcHRvcCUyMGNvZGV8ZW58MXx8fHwxNzcyMDUzOTAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
     category: "Programación",
     duration: "42 horas",
     level: "Principiante",
@@ -46,6 +48,7 @@ export const courses: Course[] = [
     rating: 4.7,
     students: 32150,
     image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxncmFwaGljJTIwZGVzaWduJTIwd29ya3NwYWNlfGVufDF8fHx8MTc3MjEwMTQ5Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/movie.mp4",
     category: "Diseño",
     duration: "35 horas",
     level: "Intermedio",
@@ -68,6 +71,7 @@ export const courses: Course[] = [
     rating: 4.9,
     students: 58900,
     image: "https://images.unsplash.com/photo-1599658880436-c61792e70672?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwbWFya2V0aW5nJTIwYW5hbHl0aWNzfGVufDF8fHx8MTc3MjA4MTM2Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
     category: "Marketing",
     duration: "28 horas",
     level: "Principiante",
@@ -90,6 +94,7 @@ export const courses: Course[] = [
     rating: 4.8,
     students: 28450,
     image: "https://images.unsplash.com/photo-1588420635201-3a9e2a2a0a07?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaG90b2dyYXBoeSUyMGNhbWVyYSUyMGVxdWlwbWVudHxlbnwxfHx8fDE3NzIwODE5OTF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/movie.mp4",
     category: "Fotografía",
     duration: "38 horas",
     level: "Principiante",
@@ -112,6 +117,7 @@ export const courses: Course[] = [
     rating: 4.7,
     students: 19870,
     image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtdXNpYyUyMHByb2R1Y3Rpb24lMjBzdHVkaW98ZW58MXx8fHwxNzcyMTE5NDgyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
     category: "Música",
     duration: "45 horas",
     level: "Intermedio",
@@ -134,6 +140,7 @@ export const courses: Course[] = [
     rating: 4.6,
     students: 41250,
     image: "https://images.unsplash.com/photo-1758691736545-5c33b6255dca?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMG1lZXRpbmclMjBwcmVzZW50YXRpb258ZW58MXx8fHwxNzcyMTM3Mzk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/movie.mp4",
     category: "Negocios",
     duration: "32 horas",
     level: "Intermedio",
@@ -156,6 +163,7 @@ export const courses: Course[] = [
     rating: 4.9,
     students: 62340,
     image: "https://images.unsplash.com/photo-1641971215245-b4ac37f97bb0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIweW9nYSUyMGV4ZXJjaXNlfGVufDF8fHx8MTc3MjEyNjEwOXww&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
     category: "Salud y Fitness",
     duration: "25 horas",
     level: "Principiante",
@@ -178,6 +186,7 @@ export const courses: Course[] = [
     rating: 4.8,
     students: 35680,
     image: "https://images.unsplash.com/photo-1617735605078-8a9336be0816?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb29raW5nJTIwa2l0Y2hlbiUyMGluZ3JlZGllbnRzfGVufDF8fHx8MTc3MjA5NTc0MXww&ixlib=rb-4.1.0&q=80&w=1080",
+    previewVideoUrl: "https://www.w3schools.com/html/movie.mp4",
     category: "Gastronomía",
     duration: "40 horas",
     level: "Intermedio",

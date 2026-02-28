@@ -15,12 +15,18 @@ import {
   Globe,
   Award,
   Smartphone,
+  CreditCard,
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { useState } from "react";
+import { coursesAPI } from "../lib/api";
 
 export function CourseDetail() {
   const { id } = useParams();
   const course = courses.find((c) => c.id === Number(id));
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false);
 
   if (!course) {
     return (
@@ -34,6 +40,37 @@ export function CourseDetail() {
       </div>
     );
   }
+
+  const handlePurchase = async () => {
+    setPurchaseLoading(true);
+    try {
+      // Simulate purchase with fake data
+      const fakePaymentData = {
+        cardNumber: "4111 1111 1111 1111",
+        cardName: "Juan Pérez",
+        expiryDate: "12/26",
+        cvv: "123",
+        address: "Calle Principal 123",
+        city: "Lima",
+        country: "Perú",
+        zipCode: "15001"
+      };
+
+      // In a real app, this would connect to the payment gateway
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // For demo purposes, we'll just simulate success
+      setPurchaseSuccess(true);
+      
+      // In real app, you would call the API
+      // await coursesAPI.simulatePurchase(course.id.toString(), fakePaymentData);
+      
+    } catch (error) {
+      console.error('Purchase error:', error);
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -73,17 +110,20 @@ export function CourseDetail() {
             <div className="hidden lg:block">
               <Card className="sticky top-24 overflow-hidden">
                 <div className="aspect-video w-full overflow-hidden">
-                  <ImageWithFallback
-                    src={course.image}
-                    alt={course.title}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                    <Button size="lg" variant="outline" className="bg-white/20 backdrop-blur-sm">
-                      <Play className="mr-2 h-5 w-5" />
-                      Vista previa
-                    </Button>
-                  </div>
+                  {course.previewVideoUrl ? (
+                    <video 
+                      src={course.previewVideoUrl} 
+                      className="h-full w-full object-cover"
+                      controls
+                      poster={course.image}
+                    />
+                  ) : (
+                    <ImageWithFallback
+                      src={course.image}
+                      alt={course.title}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
                 </div>
                 <CardContent className="p-6">
                   <div className="mb-4 text-3xl font-bold">${course.price}</div>
@@ -92,7 +132,12 @@ export function CourseDetail() {
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       Agregar al carrito
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setShowPurchaseModal(true)}
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
                       Comprar ahora
                     </Button>
                   </div>
@@ -293,6 +338,119 @@ export function CourseDetail() {
           </div>
         </div>
       </section>
+
+      {/* Purchase Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6">
+              {purchaseSuccess ? (
+                <div className="text-center">
+                  <div className="mb-4 flex justify-center">
+                    <CheckCircle2 className="h-16 w-16 text-green-500" />
+                  </div>
+                  <h2 className="mb-2 text-xl font-bold">¡Compra exitosa!</h2>
+                  <p className="mb-6 text-gray-600">
+                    Has comprado el curso "{course.title}" con éxito.
+                  </p>
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      onClick={() => {
+                        setShowPurchaseModal(false);
+                        setPurchaseSuccess(false);
+                        // Redirect to course content
+                      }}
+                    >
+                      Ver curso
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        setShowPurchaseModal(false);
+                        setPurchaseSuccess(false);
+                      }}
+                    >
+                      Continuar navegando
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h2 className="mb-4 text-xl font-bold">Finalizar compra</h2>
+                  <div className="mb-4 space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Curso</span>
+                      <span className="font-semibold">{course.title}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Precio</span>
+                      <span className="font-semibold">${course.price}</span>
+                    </div>
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between">
+                        <span className="font-bold">Total</span>
+                        <span className="font-bold">${course.price}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="mb-3 font-semibold">Datos de pago (ficticios)</h3>
+                  <div className="space-y-3 mb-6">
+                    <div>
+                      <label className="text-sm text-gray-600">Número de tarjeta</label>
+                      <div className="mt-1 p-2 border rounded text-sm">4111 1111 1111 1111</div>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600">Nombre en tarjeta</label>
+                      <div className="mt-1 p-2 border rounded text-sm">Juan Pérez</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-sm text-gray-600">Fecha de expiración</label>
+                        <div className="mt-1 p-2 border rounded text-sm">12/26</div>
+                      </div>
+                      <div>
+                        <label className="text-sm text-gray-600">CVV</label>
+                        <div className="mt-1 p-2 border rounded text-sm">123</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Button 
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      onClick={handlePurchase}
+                      disabled={purchaseLoading}
+                    >
+                      {purchaseLoading ? (
+                        <div className="flex items-center">
+                          <div className="mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Procesando...
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Pagar ${course.price}
+                        </div>
+                      )}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => setShowPurchaseModal(false)}
+                      disabled={purchaseLoading}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
