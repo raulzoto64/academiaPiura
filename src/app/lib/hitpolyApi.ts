@@ -124,7 +124,7 @@ export const mapHitpolyCourseToUI = (course: HitpolyCourse, categories: any[] = 
     instructor: 'Instructor Hitpoly',
     price: course.precio,
     rating: 4.8,
-    students: 0,
+    students: Number(course.students || (course as any).inscritos || 0),
     image: course.portada_targeta || course.url_banner || 'https://via.placeholder.com/800x400?text=Curso+Hitpoly',
     previewVideoUrl: course.url_video_introductorio || '',
     category: categoryName,
@@ -133,7 +133,9 @@ export const mapHitpolyCourseToUI = (course: HitpolyCourse, categories: any[] = 
     description: course.descripcion_corta,
     topics: topics,
     requirements: ['Computadora con acceso a internet', 'Ganas de aprender'],
-    learningOutcomes: learningOutcomes
+    learningOutcomes: learningOutcomes,
+    profesor_id: course.profesor_id,
+    raw: course
   };
 };
 
@@ -245,6 +247,29 @@ export const hitpolyApi = {
     }
   },
 
+  // Obtener conteo de inscritos de todos los cursos
+  getInscritosCounts: async (): Promise<Record<number, number>> => {
+    try {
+      const response = await fetch(`${API_COURSES_BASE_URL}/cargarInscripcionController.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'getCounts' })
+      });
+      const data = await response.json();
+      const counts: Record<number, number> = {};
+      if (data.status === 'success' && Array.isArray(data.counts)) {
+        data.counts.forEach((item: any) => {
+          counts[Number(item.curso_id)] = Number(item.total);
+        });
+      }
+      return counts;
+    } catch (e) {
+      return {};
+    }
+  },
+
+  // Obtener módulos de un curso
+
   // Obtener categorías
   getCategories: async (): Promise<any[]> => {
     const cacheKey = 'categories';
@@ -344,7 +369,6 @@ export const hitpolyApi = {
       let data;
       try {
         data = JSON.parse(text);
-        console.log('📡 [DEBUG_API] Raw data from getInfoUser:', data);
       } catch (e) {
         return cached || [];
       }
@@ -855,12 +879,29 @@ export const coursesAPI = {
   
   // Mantener compatibilidad con la interfaz anterior
   getAll: async () => {
-    const courses = await hitpolyApi.getCourses();
-    return { courses: courses.map((c) => mapHitpolyCourseToUI(c)) };
+    const [courses, counts, categories] = await Promise.all([
+      hitpolyApi.getCourses(),
+      hitpolyApi.getInscritosCounts(),
+      hitpolyApi.getCategories()
+    ]);
+    
+    return { 
+      courses: courses.map((c) => {
+        const studentCount = counts[Number(c.id)] || 0;
+        return mapHitpolyCourseToUI({ ...c, students: studentCount }, categories);
+      }) 
+    };
   },
 
   getCourseById: async (id: number) => {
-    return await hitpolyApi.getCourseById(id);
+    const [course, counts, categories] = await Promise.all([
+      hitpolyApi.getCourseById(id),
+      hitpolyApi.getInscritosCounts(),
+      hitpolyApi.getCategories()
+    ]);
+    if (!course) return null;
+    const studentCount = counts[Number(course.id)] || 0;
+    return mapHitpolyCourseToUI({ ...course, students: studentCount }, categories);
   },
 
   getModulesByCourse: async (courseId: number) => {

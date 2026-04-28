@@ -1,38 +1,44 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { CourseCard } from "../components/CourseCard";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { coursesAPI, mapHitpolyCourseToUI, type HitpolyCourse } from "../lib/hitpolyApi";
+import { useAuth } from "../contexts/AuthContext";
 
 export function Home() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("Todos");
   const [categories, setCategories] = useState<string[]>(["Todos"]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const scrollToCourses = () => {
+    const section = document.getElementById('courses-grid');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Cargar cursos y categorías en paralelo
-        const [hitpolyCourses, hitpolyCategories] = await Promise.all([
-          coursesAPI.getCourses(),
+        // Cargar cursos (con conteo de alumnos) y categorías en paralelo
+        const [allCoursesData, hitpolyCategories] = await Promise.all([
+          coursesAPI.getAll(),
           coursesAPI.getCategories()
         ]);
 
-        // console.log('🏠 Home: Categorías procesadas:', hitpolyCategories);
+        const hitpolyCourses = allCoursesData.courses;
 
-        // Mapear categorías (Hitpoly suele devolver objetos con 'nombre' o 'titulo')
+        // Mapear categorías
         const dynamicCategories = hitpolyCategories.map((cat: any) => cat.nombre || cat.titulo || cat).filter(Boolean);
         setCategories(["Todos", ...dynamicCategories]);
 
-        const mappedCourses = hitpolyCourses.map(course => ({
-          ...mapHitpolyCourseToUI(course, hitpolyCategories),
-          raw: course 
-        }));
-        setCourses(mappedCourses);
+        setCourses(hitpolyCourses);
         setError(null);
       } catch (err) {
         console.error('Error fetching home data:', err);
@@ -62,8 +68,12 @@ export function Home() {
               Accede a miles de cursos en línea. Desarrolla nuevas habilidades y
               alcanza tus metas profesionales con instructores expertos.
             </p>
-            <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
-              Empezar ahora
+            <Button 
+              size="lg" 
+              className="bg-white text-purple-600 hover:bg-gray-100"
+              onClick={() => user ? scrollToCourses() : navigate('/auth')}
+            >
+              {user ? "Descubre los mejores cursos" : "Empezar ahora"}
             </Button>
           </div>
         </div>
@@ -85,7 +95,7 @@ export function Home() {
       </section>
 
       {/* Courses Grid */}
-      <section className="py-12">
+      <section id="courses-grid" className="py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900">

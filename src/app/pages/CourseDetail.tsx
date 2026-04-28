@@ -21,6 +21,9 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useState, useEffect, useMemo } from "react";
 import { coursesAPI, mapHitpolyCourseToUI, type HitpolyCourse, cacheService } from "../lib/hitpolyApi";
 import { CourseTabs } from "../components/course/CourseTabs";
+import VideoPlayer from "../components/course/VideoPlayer";
+
+
 
 export function CourseDetail() {
   const { id } = useParams();
@@ -109,7 +112,6 @@ export function CourseDetail() {
       
       // QUITAMOS EL LOADING DE INMEDIATO si hay cache
       setLoading(false);
-      console.log('⚡ [CACHE] Datos cargados instantáneamente desde localStorage');
     }
     
     // También verificar inscripción de forma instantánea si hay cache
@@ -144,11 +146,7 @@ export function CourseDetail() {
         ]);
 
         if (hitpolyCourse) {
-          const mappedCourse = mapHitpolyCourseToUI(hitpolyCourse, hitpolyCategories);
-          setCourse({
-            ...mappedCourse,
-            raw: hitpolyCourse
-          });
+          setCourse(hitpolyCourse);
 
           // 2. Cargar Módulos y Clases
           const hitpolyModules = await coursesAPI.getModulesByCourse(courseId);
@@ -322,6 +320,18 @@ export function CourseDetail() {
               </h1>
               <p className="mb-6 text-base sm:text-lg text-gray-300 leading-relaxed max-w-3xl">{course.description}</p>
               
+              {/* Mobile Preview Video */}
+              <div className="mb-8 lg:hidden">
+                <Card className="overflow-hidden border-none bg-black">
+                  <div className="aspect-video w-full">
+                    <VideoPlayer 
+                      videoUrl={course.previewVideoUrl} 
+                      thumbnail={course.image}
+                    />
+                  </div>
+                </Card>
+              </div>
+              
               <div className="mb-6 flex flex-wrap items-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -349,20 +359,10 @@ export function CourseDetail() {
             <div className="hidden lg:block">
               <Card className="sticky top-24 overflow-hidden">
                 <div className="aspect-video w-full overflow-hidden">
-                  {course.previewVideoUrl ? (
-                    <video 
-                      src={course.previewVideoUrl} 
-                      className="h-full w-full object-cover"
-                      controls
-                      poster={course.image}
-                    />
-                  ) : (
-                    <ImageWithFallback
-                      src={course.image}
-                      alt={course.title}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
+                  <VideoPlayer 
+                    videoUrl={course.previewVideoUrl} 
+                    thumbnail={course.image}
+                  />
                 </div>
                 <CardContent className="p-6">
                   <div className="mb-4 text-3xl font-bold">${course.price}</div>

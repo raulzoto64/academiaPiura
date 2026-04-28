@@ -37,3 +37,8 @@ if (isset($data['accion']) && $data['accion'] === "inscripciones") {
         echo json_encode(['status' => 'error', 'message' => 'Error interno al procesar registro.']);
     }
 }
+
+if (isset($data['accion']) && $data['accion'] === "getCounts") {
+    $resultado = $dataInscripciones->getInscritosTodosLosCursos();
+    echo json_encode(['status' => 'success', 'counts' => $resultado]);
+}

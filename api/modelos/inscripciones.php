@@ -84,4 +84,15 @@ class Inscripciones {
             return [];
         }
     }
+
+    public function getInscritosTodosLosCursos() {
+        try {
+            $sql = "SELECT curso_id, COUNT(*) as total FROM {$this->db_academy}.cursos_inscritos GROUP BY curso_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
 }

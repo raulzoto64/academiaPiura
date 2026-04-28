@@ -22,11 +22,12 @@ import { coursesAPI, commentsAPI, liveClassesAPI, cacheService } from '../lib/ap
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { ClassroomTabs } from '../components/course/ClassroomTabs';
+import VideoPlayer from '../components/course/VideoPlayer';
 
 export function Classroom() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   
   const [course, setCourse] = useState<any>(null);
   const [allLessons, setAllLessons] = useState<any[]>([]);
@@ -67,6 +68,13 @@ export function Classroom() {
     }
   }, [user?.id, courseId]);
 
+  // Sincronizar progreso con localStorage para que aparezca en "Mis Cursos"
+  useEffect(() => {
+    if (user?.id && courseId && allLessons.length > 0) {
+      localStorage.setItem(`course_progress_${user.id}_${courseId}`, progressPercentage.toString());
+    }
+  }, [progressPercentage, user?.id, courseId, allLessons.length]);
+
   const toggleLessonComplete = () => {
     if (!currentLesson || !user?.id || !courseId) return;
     
@@ -97,17 +105,24 @@ export function Classroom() {
     const cachedLessons = cacheService.get(`classes_course_${id}`);
 
     if (cachedCourse) {
-      setCourse(cachedCourse);
-      if (cachedLessons) {
-        setAllLessons(cachedLessons);
-        setLoading(false);
-        console.log('⚡ [AULA] Datos cargados instantáneamente desde localStorage');
-      }
+        setCourse(cachedCourse);
+        if (cachedLessons) {
+          setAllLessons(cachedLessons);
+          setLoading(false);
+        }
     }
   }, [courseId]);
 
   // 1. Cargar datos del curso, módulos y clases
   useEffect(() => {
+    if (authLoading) return;
+    
+    if (!user) {
+      toast.error("Debes iniciar sesión para acceder al aula");
+      navigate('/auth');
+      return;
+    }
+
     const fetchClassroomData = async () => {
       if (!courseId) return;
       
@@ -138,14 +153,15 @@ export function Classroom() {
         // 2. Verificar inscripción
         if (user?.id) {
           const enrolledCourses = await coursesAPI.getUserEnrolledCourses(Number(user.id));
-          const isEnrolled = enrolledCourses.some((c: any) => 
-            Number(c.id) === id || 
-            Number(c.curso_id) === id || 
-            (courseData.titulo && c.titulo === courseData.titulo)
-          );
+
+          const isEnrolled = enrolledCourses.some((c: any) => {
+            const matchId = Number(c.id) === id;
+            const matchCursoId = Number(c.curso_id) === id;
+            const matchTitle = (courseData.title && c.titulo === courseData.title) || (courseData.titulo && c.titulo === courseData.titulo);
+            return matchId || matchCursoId || matchTitle;
+          });
           
           if (!isEnrolled && user.role !== 'admin') {
-
             toast.error("No tienes acceso a este curso. Por favor inscríbete primero.");
             navigate(`/course/${courseId}`);
             return;
@@ -290,22 +306,25 @@ export function Classroom() {
     <div className="min-h-screen bg-gray-50 max-w-full overflow-x-hidden">
       {/* Header bar with Back button */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:py-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0">
-              <ChevronLeft className="h-4 w-4" />
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 h-9 px-2">
+              <ChevronLeft className="h-5 w-5" />
               <span className="hidden sm:inline ml-1">Volver</span>
             </Button>
-            <div className="min-w-0">
-              <h2 className="text-[10px] sm:text-xs font-medium text-gray-500 break-words whitespace-normal uppercase tracking-wider">{course?.titulo}</h2>
-              <h1 className="text-sm sm:text-lg font-bold break-words whitespace-normal text-gray-900 leading-tight">{currentLesson?.titulo}</h1>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-[10px] sm:text-xs font-medium text-gray-500 truncate uppercase tracking-wider">{course?.titulo}</h2>
+              <h1 className="text-sm sm:text-lg font-bold truncate text-gray-900 leading-tight">{currentLesson?.titulo}</h1>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <div className="text-[10px] sm:text-sm font-bold text-gray-700">
-              {progressPercentage}%
+          <div className="flex flex-col sm:items-end gap-1.5 sm:gap-1 shrink-0 w-full sm:w-auto">
+            <div className="flex items-center justify-between sm:justify-end gap-2 w-full">
+              <span className="text-[10px] text-gray-400 font-medium sm:hidden">Progreso del curso</span>
+              <div className="text-xs sm:text-sm font-bold text-gray-700">
+                {progressPercentage}%
+              </div>
             </div>
-            <div className="w-16 sm:w-32 h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+            <div className="w-full sm:w-32 h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
               <div 
                 className="h-full bg-green-500 transition-all duration-700 ease-out shadow-[0_0_8px_rgba(34,197,94,0.4)]"
                 style={{ width: `${progressPercentage}%` }}
@@ -324,30 +343,10 @@ export function Classroom() {
               <CardContent className="p-0">
                 <div className="aspect-video w-full bg-black relative group">
                   {currentLesson?.url_video ? (
-                    <iframe
-                      src={(() => {
-                        const url = currentLesson.url_video;
-                        if (!url) return '';
-                        
-                        if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                          let videoId = '';
-                          if (url.includes('youtu.be/')) {
-                            videoId = url.split('youtu.be/')[1].split('?')[0];
-                          } else if (url.includes('watch?v=')) {
-                            videoId = url.split('watch?v=')[1].split('&')[0];
-                          } else if (url.includes('embed/')) {
-                            return url;
-                          }
-                          
-                          if (videoId) {
-                            return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
-                          }
-                        }
-                        return url;
-                      })()}
-                      className="h-full w-full absolute top-0 left-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
+                    <VideoPlayer 
+                      videoUrl={currentLesson.url_video}
+                      thumbnail={course?.portada_targeta || course?.image || course?.imagen || course?.url_banner}
+                      onVideoCompleted={toggleLessonComplete}
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-white flex-col gap-2">
