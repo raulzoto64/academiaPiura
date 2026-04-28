@@ -1,0 +1,25 @@
+@import './fonts.css';
+@import "tailwindcss";
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+@import './theme.css';
+
+@layer utilities {
+  .thin-scrollbar::-webkit-scrollbar {
+    height: 2px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+  }
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+  }
+}
