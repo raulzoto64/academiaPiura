@@ -64,42 +64,36 @@ export function MyCourses() {
           coursesAPI.getAll()
         ]);
 
-        const myEnrollments = await coursesAPI.getUserEnrolledCourses(Number(user.id));
+
         const catalog = allCoursesData.courses || [];
 
         // Cruzar datos para obtener imágenes, IDs reales, etc.
         const mappedCourses = myEnrollments.map((enrollment: any) => {
           // 1. Resolver el curso en el catálogo primero para tener el ID real
-          const courseDetails = catalog.find((c: any) =>
-            Number(c.id) === Number(enrollment.id) ||
-            Number(c.id) === Number(enrollment.curso_id) ||
-            c.title === enrollment.titulo ||
-            c.titulo === enrollment.titulo
-          );
-
-          const realId = courseDetails?.id || enrollment.id || enrollment.curso_id;
-
-          // 2. Ahora que tenemos el realId, buscar progreso en localStorage
-          const localProgressData = localStorage.getItem(`course_progress_${user.id}_${realId}`);
-          const progress = localProgressData ? parseInt(localProgressData) : (enrollment.progreso || 0);
-
-          console.log(`DEBUG [MyCourses]: Mapeando curso "${enrollment.titulo || enrollment.title}"`, {
-            idRel: realId,
-            progresoAPI: enrollment.progreso,
-            progresoLocal: localProgressData,
-            resultadoFinal: progress
+          const courseDetails = catalog.find((c: any) => {
+            const enrollTitle = (enrollment.titulo || enrollment.title || "").toLowerCase().trim();
+            const catalogTitle = (c.titulo || c.title || "").toLowerCase().trim();
+            
+            return Number(c.id) === Number(enrollment.id) ||
+                   Number(c.id) === Number(enrollment.curso_id) ||
+                   (enrollTitle.length > 0 && enrollTitle === catalogTitle);
           });
+          const idRel = courseDetails?.id || enrollment.id || enrollment.curso_id;
+          
+          // Calcular progreso
+          const progressAPI = enrollment.progreso;
+          const progressLocal = localStorage.getItem(`course_progress_${user.id}_${idRel}`);
+          const resultadoFinal = progressAPI !== undefined ? Number(progressAPI) : (progressLocal ? Number(progressLocal) : 0);
 
           return {
-            id: realId,
-            title: courseDetails?.title || enrollment.titulo || enrollment.title,
-            progress: progress,
+            ...courseDetails,
+            id: idRel,
+            progress: resultadoFinal,
             lastAccessed: "Recientemente",
-            thumbnail: courseDetails?.image || "https://images.unsplash.com/photo-1675495277087-10598bf7bcd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9ncmFtbWluZyUyMGxhcHRvcCUyMGNvZGV8ZW58MXx8fHwxNzcyMDUzOTAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+            id_inscripcion: enrollment.id_inscripcion || enrollment.id
           };
         }).filter((c: any) => c.id); // Filtrar los que no pudieron ser mapeados correctamente (sin ID)
 
-        setEnrolledCourses(mappedCourses);
         setEnrolledCourses(mappedCourses);
       } catch (error) {
         console.error("Error al cargar mis cursos:", error);
